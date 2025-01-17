@@ -1,5 +1,5 @@
 ## Interface: 11200
-## Title: Warrior Tweaks
+## Title: |cffc79c6eWarrior Tweaks
 ## Notes: displays ability hints | Reset with '/wt reset'
 ## Version: v1.0.0
 ## DefaultState: enabled
