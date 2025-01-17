@@ -1,0 +1,9 @@
+## Interface: 11200
+## Title: Warrior Tweaks
+## Notes: displays ability hints | Reset with '/wt reset'
+## Version: v1.0.0
+## DefaultState: enabled
+## Author: Klausdieter
+## SavedVariablesPerCharacter: WarriorTweaks_opts
+
+WarriorTweaks.lua
