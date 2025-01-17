@@ -1,6 +1,6 @@
 ## Interface: 11200
 ## Title: |cffc79c6eWarrior Tweaks
-## Notes: displays ability hints | Reset with '/wt reset'
+## Notes: displays ability hints | Options with '/wt'
 ## Version: v1.0.1
 ## DefaultState: enabled
 ## Author: Klausdieter

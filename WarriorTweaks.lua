@@ -40,7 +40,7 @@ local function resetOpts()
 end
 
 function wtprint(a)
-    DEFAULT_CHAT_FRAME:AddMessage(" |cC69B6D4A [WarriorTweaks] |cffffffff" .. a)
+    DEFAULT_CHAT_FRAME:AddMessage(" |cC69B6D4A[WarriorTweaks] |cffffffff" .. a)
 end
 
 -- Slashcommands
@@ -50,23 +50,46 @@ SlashCmdList["WT"] = function(cmd)
         cmd = string.lower(cmd) -- convert to lowercase
         if string.sub(cmd, 1, 2) == 'ap' then
             if string.sub(cmd, 4, 6) == 'off' then
-                wt_opts.ap = false
+                wt_opts.ap_active = false
                 wtprint('ap frame deactivated')
             else
-                wt_opts.ap = true
+                wt_opts.ap_active = true
                 wtprint('ap frame activated')
+            end
+        end
+        if string.sub(cmd, 1, 6) == 'sunder' then
+            if string.sub(cmd, 8, 10) == 'off' then
+                wt_opts.sunder_active = false
+                wtprint('sunder frame deactivated')
+            else
+                wt_opts.sunder_active = true
+                wtprint('sunder frame activated')
+            end
+        end
+        if string.sub(cmd, 1, 2) == 'bs' then
+            if string.sub(cmd, 4, 6) == 'off' then
+                wt_opts.BattleShout_active = false
+                wtprint('Battle Shout frame deactivated')
+            else
+                wt_opts.BattleShout_active = true
+                wtprint('Battle Shout frame activated')
             end
         end
         if string.sub(cmd, 1, 5) == 'reset' then
             resetOpts()
+            ReloadUI()
             wtprint('options resetted')
         end
         -- hints if input is invalid
         if string.sub(cmd, 1, 1) == "" then
             wtprint(WarriorTweaks.addonName .. ' |cffabd473v' .. WarriorTweaks.addonVersion .. '|cffffffff available commands:')
-            wtprint("/wt ap - Activates ap frame")
-            wtprint("/wt ap off - Deactivates ap frame")
-            wtprint("/wt reset - Resets everything to default")
+            wtprint("/wt reset - Resets all options to default and reloads UI")
+            wtprint("/wt ap on - Activates AP frame")
+            wtprint("/wt ap off - Deactivates AP frame")
+            wtprint("/wt sunder on - Activates Sunder frame")
+            wtprint("/wt sunder off - Deactivates Sunder frame")
+            wtprint("/wt bs on - Activates Battle Shout frame")
+            wtprint("/wt bs off - Deactivates Battle Shout frame")
         end
                 
     end
@@ -188,9 +211,15 @@ end
 -- Main Loop
 function update()
     if UnitAffectingCombat("player") then
-		APupdate(1, displayString())
-        battleShoutUpdate(1)
-        sunderUpdate(1,sunderCount())
+		if wt_opts.ap_active then
+            APupdate(1, displayString())
+        end
+        if wt_opts.BattleShout_active then
+            battleShoutUpdate(1)
+        end
+        if wt_opts.sunder_active then
+            sunderUpdate(1,sunderCount())
+        end
 	else --not in combat
 		APupdate(2, "")
         battleShoutUpdate(2)
@@ -290,6 +319,19 @@ function displayAP()
 end
 
 -- INIT
+local function SetFramePosition(frame, opts_prefix)
+    if not frame then
+        return
+    end
+
+    local point = wt_opts[opts_prefix .. "_point"]
+    local rel_point = wt_opts[opts_prefix .. "_rel_point"]
+    local x_offset = wt_opts[opts_prefix .. "_x_offset"]
+    local y_offset = wt_opts[opts_prefix .. "_y_offset"]
+
+    frame:SetPoint(point, UIParent, rel_point, x_offset, y_offset)
+end
+
 function WarriorTweaks:Init()
     createApFrame()
     createBattleShoutFrame()
@@ -297,9 +339,10 @@ function WarriorTweaks:Init()
 
     if not wt_opts then
         resetOpts()
-    end
-    if wt_opts.ap then
-        WarriorTweaks.aPframe:SetPoint(wt_opts.ap_point, UIParent, wt_opts.ap_rel_point, wt_opts.ap_x_offset, wt_opts.ap_y_offset)
+    else
+        SetFramePosition(WarriorTweaks.aPframe, "ap")
+        SetFramePosition(WarriorTweaks.battleShoutFrame, "BattleShout")
+        SetFramePosition(WarriorTweaks.sunderframe, "sunder")
     end
     
 end

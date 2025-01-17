@@ -11,4 +11,7 @@ Planned:
 
 - maybe threat addin for ARC HUD2
 
+### The moveable frames in game:  
+![WT Frames](./WarriorTweaks.png) 
+
 Based on melbaas "apd" Addon
