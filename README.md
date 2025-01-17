@@ -5,8 +5,10 @@ Warrior Tweaks is an Addon to help manage your abilities infight. Its under deve
 Featurelist:
 - Bloodthirst or Execute calculation -> when to use what for max dmg
 - BattleShout reminder
+- Sunder Armor counter + reminder
 
 Planned:
 
-- Thunder Armor counter + reminder
 - maybe threat addin for ARC HUD2
+
+Based on melbaas "apd" Addon
