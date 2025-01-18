@@ -8,7 +8,7 @@ Featurelist:
 - Sunder Armor counter + reminder
 
 Planned:
-
+- add durationtimer on sunder icon
 - maybe threat addin for ARC HUD2
 
 ### The moveable frames in game:  

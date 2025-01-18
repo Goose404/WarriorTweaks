@@ -1,10 +1,11 @@
 local ADDON_NAME = "WarriorTweaks"
 
 WarriorTweaks = {}
+updateIntervalInSec = 0.2
 
 local playerClass = string.upper(UnitClass('player'));
 WarriorTweaks.addonName = 'WarriorTweaks'
-WarriorTweaks.addonVersion = '1.0.1'
+WarriorTweaks.addonVersion = '1.0.2'
 
 -- Interface
 WarriorTweaks.mainframe = CreateFrame("Frame","MainFrame",UIParent)
@@ -208,17 +209,29 @@ function createSunderFrame()
     WarriorTweaks.sunderframe:Hide()
 end
 
+-- utility stuff
+local function isTargetHostile()
+    if UnitExists("target") and UnitCanAttack("player", "target") then      
+        return true
+    end
+    return false
+end
+
 -- Main Loop
 function update()
     if UnitAffectingCombat("player") then
-		if wt_opts.ap_active then
+		if wt_opts.ap_active and isTargetHostile() then
             APupdate(1, displayString())
         end
         if wt_opts.BattleShout_active then
             battleShoutUpdate(1)
         end
-        if wt_opts.sunder_active then
-            sunderUpdate(1,sunderCount())
+        if wt_opts.sunder_active and isTargetHostile() then
+            sunderUpdate(1,sunderInfo())
+        end
+        if not isTargetHostile() then
+            APupdate(2, "")
+            sunderUpdate(2,"")
         end
 	else --not in combat
 		APupdate(2, "")
@@ -239,20 +252,21 @@ function sunderUpdate(show, count)
     end
 end
 
-function sunderCount()
-    local debuffToCheck = "Sunder Armor"
+function sunderInfo()
     local stackCount = 0
-    
-    for i = 1, 16 do -- Max 16 Debuffs 
-        local name, count, icon = UnitDebuff("target", i)
-        if name ~= nil then
-            if string.find(name, "Sunder") then
-                stackCount = count or 1 -- No count means 1
-                return tostring(stackCount)                
-            end
+    local i = 1
+    while true do
+        local name, count, _3, spellId = UnitDebuff("target", i)
+        if not name then -- end loop, no more debuff found
+            break
         end
-    end       
-    return "0"    
+        if spellId == 11597 then -- name isnt really the name, its the icon path. Yet it has the name in it
+            stackCount = count or 1 -- no stack means 1
+            return tostring(stackCount)
+        end
+        i = i + 1 -- check next
+    end
+    return "0" -- no sunder found
 end
 
 -- Battleshout stuff
@@ -347,22 +361,32 @@ function WarriorTweaks:Init()
     
 end
 
+-- Timer function (int:interval in seconds)
+local function UpdateTimer(interval)
+    -- updateinterval in seconds
+    local time_elapsed = 0
+    WarriorTweaks.mainframe:SetScript("OnUpdate", function()
+        time_elapsed = time_elapsed + arg1 -- arg1 is time since last frameupdate
+        if time_elapsed >= interval then
+            update()
+            time_elapsed = 0
+        end
+    end)
+end
+
 -- Events
 WarriorTweaks.mainframe:RegisterEvent("ADDON_LOADED")
-WarriorTweaks.mainframe:RegisterEvent("UNIT_COMBAT")
-WarriorTweaks.mainframe:RegisterEvent("UNIT_AURA")
-WarriorTweaks.mainframe:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 
--- Init and Maintrigger
+-- Init Addon Functions
 WarriorTweaks.mainframe:SetScript("OnEvent", function()
     if playerClass=="WARRIOR" then
         if event == "ADDON_LOADED" then
             if arg1 == ADDON_NAME then
                 DEFAULT_CHAT_FRAME:AddMessage("|cC69B6D4A Warrior Tweaks:|r Loaded",1,1,1)
-                WarriorTweaks:Init()   
+                WarriorTweaks:Init()
+                UpdateTimer(updateIntervalInSec)   
             end
-        end
-        update()
+        end        
     end
 end);
 

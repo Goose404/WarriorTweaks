@@ -1,7 +1,7 @@
 ## Interface: 11200
 ## Title: |cffc79c6eWarrior Tweaks
 ## Notes: displays ability hints | Options with '/wt'
-## Version: v1.0.1
+## Version: v1.0.2
 ## DefaultState: enabled
 ## Author: Klausdieter
 ## SavedVariablesPerCharacter: wt_opts
