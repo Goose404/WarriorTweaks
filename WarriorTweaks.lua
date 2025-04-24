@@ -1,5 +1,8 @@
 local ADDON_NAME = "WarriorTweaks"
 
+--modules
+local TTD = WarriorTweaksTTD
+
 WarriorTweaks = {}
 updateIntervalInSec = 0.2
 
@@ -37,6 +40,12 @@ local function resetOpts()
         sunder_rel_point = "CENTER",
         sunder_x_offset = 300,
         sunder_y_offset = 100,
+        -- Time till death
+        ttd_active = true,
+        ttd_point = "CENTER",
+        ttd_rel_point = "CENTER",
+        ttd_x_offset = 0,
+        ttd_y_offset = -150,
     }
 end
 
@@ -76,6 +85,17 @@ SlashCmdList["WT"] = function(cmd)
                 wtprint('Battle Shout frame activated')
             end
         end
+        if string.sub(cmd, 1, 5) == 'timer' then
+            if string.sub(cmd, 7, 9) == 'off' then
+                wt_opts.ttd_active = false
+                wtprint('Time till death frame deactivated')
+            else
+                wt_opts.ttd_active = true
+                wtprint('Time till death frame activated')
+            end
+        end
+        
+
         if string.sub(cmd, 1, 5) == 'reset' then
             resetOpts()
             ReloadUI()
@@ -91,6 +111,8 @@ SlashCmdList["WT"] = function(cmd)
             wtprint("/wt sunder off - Deactivates Sunder frame")
             wtprint("/wt bs on - Activates Battle Shout frame")
             wtprint("/wt bs off - Deactivates Battle Shout frame")
+            wtprint("/wt timer on - Activates time till death frame")
+            wtprint("/wt timer off - Deactivates time till death frame")
         end
                 
     end
@@ -98,7 +120,6 @@ end
 
 -- Frame Creation
 function createBattleShoutFrame()
-    WarriorTweaks.battleShoutFrame = CreateFrame("Frame",nill,MainFrame)
     WarriorTweaks.battleShoutFrame = CreateFrame("Frame",nil,MainFrame)
     WarriorTweaks.battleShoutFrame:SetMovable(true)
     WarriorTweaks.battleShoutFrame:EnableMouse(true)
@@ -117,7 +138,7 @@ function createBattleShoutFrame()
     WarriorTweaks.battleShoutFrame:SetScript("OnDragStart", function() WarriorTweaks.battleShoutFrame:StartMoving() end)
     WarriorTweaks.battleShoutFrame:SetScript("OnDragStop", function()
         WarriorTweaks.battleShoutFrame:StopMovingOrSizing()
-        point, _, rel_point, x_offset, y_offset = WarriorTweaks.battleShoutFrame:GetPoint()
+        local point, _, rel_point, x_offset, y_offset = WarriorTweaks.battleShoutFrame:GetPoint()
     
         if x_offset < 20 and x_offset > -20 then
             x_offset = 0
@@ -156,7 +177,7 @@ function createApFrame()
     WarriorTweaks.aPframe:SetScript("OnDragStart", function() WarriorTweaks.aPframe:StartMoving() end)
     WarriorTweaks.aPframe:SetScript("OnDragStop", function()
         WarriorTweaks.aPframe:StopMovingOrSizing()
-        point, _, rel_point, x_offset, y_offset = WarriorTweaks.aPframe:GetPoint()
+        local point, _, rel_point, x_offset, y_offset = WarriorTweaks.aPframe:GetPoint()
     
         if x_offset < 20 and x_offset > -20 then
             x_offset = 0
@@ -195,7 +216,7 @@ function createSunderFrame()
     WarriorTweaks.sunderframe:SetScript("OnDragStart", function() WarriorTweaks.sunderframe:StartMoving() end)
     WarriorTweaks.sunderframe:SetScript("OnDragStop", function()
         WarriorTweaks.sunderframe:StopMovingOrSizing()
-        point, _, rel_point, x_offset, y_offset = WarriorTweaks.sunderframe:GetPoint()
+        local point, _, rel_point, x_offset, y_offset = WarriorTweaks.sunderframe:GetPoint()
     
         if x_offset < 20 and x_offset > -20 then
             x_offset = 0
@@ -218,7 +239,7 @@ local function isTargetHostile()
 end
 
 -- Main Loop
-function update()
+function updateAll()
     if UnitAffectingCombat("player") then
 		if wt_opts.ap_active and isTargetHostile() then
             APupdate(1, displayString())
@@ -229,11 +250,18 @@ function update()
         if wt_opts.sunder_active and isTargetHostile() then
             sunderUpdate(1,sunderInfo())
         end
+        if wt_opts.ttd_active and isTargetHostile() then
+            TTD:Update()
+            TTD:Show()
+            --TTD:Hide()
+        end
         if not isTargetHostile() then
+            TTD:Hide()
             APupdate(2, "")
             sunderUpdate(2,"")
         end
 	else --not in combat
+        TTD:Hide()
 		APupdate(2, "")
         battleShoutUpdate(2)
         sunderUpdate(2,"")
@@ -327,10 +355,15 @@ function displayAP()
         ApIcon:SetTexture("Interface\\Icons\\spell_nature_bloodlust")
         return "|cffff0000 AP "..ap -- Rot, wenn AP > 2000
     else
-        ApIcon:SetTexture("interface\\icons\\inv_sword_48")
+        --ApIcon:SetTexture("interface\\icons\\inv_sword_48")
         return "|cffffffff AP "..ap --ap -- Weiß, wenn AP <= 2000
     end
 end
+
+-- Variablen, um die letzten Daten zu speichern
+local lastTargetHealth = nil
+local lastTime = nil
+local lastTargetName = nil
 
 -- INIT
 local function SetFramePosition(frame, opts_prefix)
@@ -350,6 +383,7 @@ function WarriorTweaks:Init()
     createApFrame()
     createBattleShoutFrame()
     createSunderFrame()
+    TTD:Create(MainFrame)
 
     if not wt_opts then
         resetOpts()
@@ -357,6 +391,7 @@ function WarriorTweaks:Init()
         SetFramePosition(WarriorTweaks.aPframe, "ap")
         SetFramePosition(WarriorTweaks.battleShoutFrame, "BattleShout")
         SetFramePosition(WarriorTweaks.sunderframe, "sunder")
+        SetFramePosition(WarriorTweaks.ttdFrame, "ttd")
     end
     
 end
@@ -368,7 +403,7 @@ local function UpdateTimer(interval)
     WarriorTweaks.mainframe:SetScript("OnUpdate", function()
         time_elapsed = time_elapsed + arg1 -- arg1 is time since last frameupdate
         if time_elapsed >= interval then
-            update()
+            updateAll()
             time_elapsed = 0
         end
     end)

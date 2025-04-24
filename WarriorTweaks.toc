@@ -6,4 +6,5 @@
 ## Author: Klausdieter
 ## SavedVariablesPerCharacter: wt_opts
 
+ttd.lua
 WarriorTweaks.lua
