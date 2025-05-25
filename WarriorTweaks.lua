@@ -281,18 +281,16 @@ function sunderUpdate(show, count)
 end
 
 function sunderInfo()
-    local stackCount = 0
-    local i = 1
+    local j = 1
     while true do
-        local name, count, _3, spellId = UnitDebuff("target", i)
-        if not name then -- end loop, no more debuff found
+        local texture, count = UnitDebuff("target", j)
+        if not texture then
             break
         end
-        if spellId == 11597 then -- name isnt really the name, its the icon path. Yet it has the name in it
-            stackCount = count or 1 -- no stack means 1
-            return tostring(stackCount)
+        if string.find(texture, "Ability_Warrior_Sunder") then
+            return tostring(count or 1)
         end
-        i = i + 1 -- check next
+        j = j + 1
     end
     return "0" -- no sunder found
 end
