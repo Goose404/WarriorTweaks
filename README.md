@@ -6,10 +6,9 @@ Featurelist:
 - Bloodthirst or Execute calculation -> when to use what for max dmg
 - BattleShout reminder
 - Sunder Armor counter + reminder
+- Timer that displays the remaining estimated fightlenth
 
-Planned:
-- add durationtimer on sunder icon
-- maybe threat addin for ARC HUD2
+Missing a feature? Msg me :)
 
 ### The moveable frames in game:  
 ![WT Frames](./WarriorTweaks.png) 
