@@ -407,19 +407,16 @@ local function UpdateTimer(interval)
     end)
 end
 
--- Events
 WarriorTweaks.mainframe:RegisterEvent("ADDON_LOADED")
 
 -- Init Addon Functions
 WarriorTweaks.mainframe:SetScript("OnEvent", function()
-    if playerClass=="WARRIOR" then
-        if event == "ADDON_LOADED" then
-            if arg1 == ADDON_NAME then
-                DEFAULT_CHAT_FRAME:AddMessage("|cC69B6D4A Warrior Tweaks:|r Loaded",1,1,1)
-                WarriorTweaks:Init()
-                UpdateTimer(updateIntervalInSec)   
-            end
-        end        
+    if event == "ADDON_LOADED" then
+        if arg1 == ADDON_NAME then
+            DEFAULT_CHAT_FRAME:AddMessage("|cC69B6D4A Warrior Tweaks:|r Loaded",1,1,1)
+            WarriorTweaks:Init()
+            UpdateTimer(updateIntervalInSec)
+        end
     end
 end);
 
