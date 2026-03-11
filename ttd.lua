@@ -50,6 +50,25 @@ function TTD:Create(parent)
 
 end
 
+function TTD:ApplyBackground()
+    if not frame then
+        return
+    end
+
+    if wt_opts and wt_opts.ttd_background == false then
+        frame:SetBackdrop(nil)
+        frame:SetBackdropColor(0, 0, 0, 0)
+    else
+        frame:SetBackdrop({
+            bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+            edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+            tile = true, tileSize = 16, edgeSize = 8,
+            insets = { left = 2, right = 2, top = 2, bottom = 2 }
+        })
+        frame:SetBackdropColor(0, 0, 0, 0.8)
+    end
+end
+
 function TTD:Update()
     if not text then
         return

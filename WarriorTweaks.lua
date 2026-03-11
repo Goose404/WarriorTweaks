@@ -46,6 +46,9 @@ local function resetOpts()
         ttd_rel_point = "CENTER",
         ttd_x_offset = 0,
         ttd_y_offset = -150,
+        -- General
+        lock_frames = false,
+        ttd_background = true,
     }
 end
 
@@ -58,6 +61,31 @@ SLASH_WT1 = "/wt"
 SlashCmdList["WT"] = function(cmd)
     if cmd then
         cmd = string.lower(cmd) -- convert to lowercase
+        if string.sub(cmd, 1, 4) == 'lock' then
+            wt_opts.lock_frames = true
+            WarriorTweaks:ApplyFrameLock()
+            wtprint('frames locked')
+        end
+        if string.sub(cmd, 1, 6) == 'unlock' then
+            wt_opts.lock_frames = false
+            WarriorTweaks:ApplyFrameLock()
+            wtprint('frames unlocked')
+        end
+        if string.sub(cmd, 1, 10) == 'background' then
+            if string.sub(cmd, 12, 14) == 'off' then
+                wt_opts.ttd_background = false
+                if TTD and TTD.ApplyBackground then
+                    TTD:ApplyBackground()
+                end
+                wtprint('TTD background disabled')
+            else
+                wt_opts.ttd_background = true
+                if TTD and TTD.ApplyBackground then
+                    TTD:ApplyBackground()
+                end
+                wtprint('TTD background enabled')
+            end
+        end
         if string.sub(cmd, 1, 2) == 'ap' then
             if string.sub(cmd, 4, 6) == 'off' then
                 wt_opts.ap_active = false
@@ -113,6 +141,10 @@ SlashCmdList["WT"] = function(cmd)
             wtprint("/wt bs off - Deactivates Battle Shout frame")
             wtprint("/wt timer on - Activates time till death frame")
             wtprint("/wt timer off - Deactivates time till death frame")
+            wtprint("/wt lock - Locks all frames")
+            wtprint("/wt unlock - Unlocks all frames")
+            wtprint("/wt background on - Enables TTD background")
+            wtprint("/wt background off - Disables TTD background")
         end
                 
     end
@@ -377,6 +409,32 @@ local function SetFramePosition(frame, opts_prefix)
     frame:SetPoint(point, UIParent, rel_point, x_offset, y_offset)
 end
 
+function WarriorTweaks:ApplyFrameLock()
+    if not wt_opts then
+        return
+    end
+
+    local locked = wt_opts.lock_frames
+    local frames = {
+        WarriorTweaks.aPframe,
+        WarriorTweaks.battleShoutFrame,
+        WarriorTweaks.sunderframe,
+        WarriorTweaks.ttdFrame,
+    }
+
+    for _, f in ipairs(frames) do
+        if f then
+            f:SetMovable(not locked)
+            f:EnableMouse(not locked)
+            if locked then
+                f:RegisterForDrag()
+            else
+                f:RegisterForDrag("LeftButton")
+            end
+        end
+    end
+end
+
 function WarriorTweaks:Init()
     createApFrame()
     createBattleShoutFrame()
@@ -386,10 +444,21 @@ function WarriorTweaks:Init()
     if not wt_opts then
         resetOpts()
     else
+        if wt_opts.lock_frames == nil then
+            wt_opts.lock_frames = false
+        end
+        if wt_opts.ttd_background == nil then
+            wt_opts.ttd_background = true
+        end
         SetFramePosition(WarriorTweaks.aPframe, "ap")
         SetFramePosition(WarriorTweaks.battleShoutFrame, "BattleShout")
         SetFramePosition(WarriorTweaks.sunderframe, "sunder")
         SetFramePosition(WarriorTweaks.ttdFrame, "ttd")
+    end
+
+    WarriorTweaks:ApplyFrameLock()
+    if TTD and TTD.ApplyBackground then
+        TTD:ApplyBackground()
     end
     
 end
