@@ -1,13 +1,13 @@
 local TTD = {
-    History = {},               -- Speichert {time = zeit, health = gesundheit} Paare
-    HadTargetLastUpdate = false,-- Hatten wir im letzten Frame ein gültiges Ziel?
-    LastTargetMaxHealth = 0,    -- Max HP des Ziels im letzten Frame (0 wenn kein Ziel)
-    WINDOW_DURATION = 5,        -- Zeitfenster in Sekunden für Durchschnittsberechnung (anpassbar)
-    MIN_DATAPOINTS = 3,         -- Mindestanzahl Datenpunkte für stabile Berechnung (anpassbar)
-    UPDATE_INTERVAL = 0.5,      -- Mindestintervall zum Speichern von Datenpunkten
-    LastRecordTime = 0,         -- Zeitstempel der letzten Datenaufnahme
-    -- Referenz auf das Text-Anzeige-Objekt (muss hier oder später zugewiesen werden)
-    -- Beispiel: textFrame = nil
+    History = {},               -- Stores {time = t, health = hp} pairs
+    HadTargetLastUpdate = false,-- Did we have a valid target on last update?
+    LastTargetMaxHealth = 0,    -- Max HP of the target on last update (0 if none)
+    WINDOW_DURATION = 4,        -- Time window (seconds) for average DPS calculation
+    MIN_DATAPOINTS = 4,         -- Minimum number of data points for a stable estimate
+    UPDATE_INTERVAL = 0.25,     -- Minimum interval between stored data points
+    LastRecordTime = 0,         -- Timestamp of last stored data point
+    -- Reference to the text display object (assigned later)
+    -- Example: textFrame = nil
 }
 local frame, text
 local lastHealth = 0
@@ -76,7 +76,7 @@ function TTD:Update()
 
     local now = GetTime()
 
-    -- 1. Prüfen, ob aktuell ein gültiges Ziel existiert
+    -- 1. Check if there is a valid current target
     local currentTargetExists = UnitExists("target") and not UnitIsDead("target") and not UnitIsGhost("target")
     local currentMaxHealth = 0
     local currentHealth = 0
@@ -86,7 +86,7 @@ function TTD:Update()
         currentHealth = UnitHealth("target")
     end
 
-    -- 2. Zielwechsel-Erkennung und Reset
+    -- 2. Detect target changes and reset when necessary
     local resetNeeded = false
     if currentTargetExists ~= self.HadTargetLastUpdate then
         resetNeeded = true
@@ -101,28 +101,26 @@ function TTD:Update()
         self.History = {}
         self.LastRecordTime = 0
         if currentTargetExists then
-            text:SetText("TTD: Calc...")
+            frame:Hide()
             table.insert(self.History, { time = now, health = currentHealth })
             self.LastRecordTime = now
         else
-            text:SetText("TTD: N/A")
+            frame:Hide()
         end
         return
     end
 
     if not currentTargetExists then
-         text:SetText("TTD: N/A")
-         return
+        frame:Hide()
+        return
     end
 
-    -- 4. Datenpunkt hinzufügen (Intervall-basiert + Gesundheitsänderung)
+    -- 4. Add a new data point (interval-based + only when health changed)
     local addData = false
     if now - self.LastRecordTime >= self.UPDATE_INTERVAL then
-        -- Verwende table.getn() statt #
         if table.getn(self.History) == 0 then
              addData = true
         else
-            -- Verwende table.getn() statt #
             local lastEntry = self.History[table.getn(self.History)]
             if lastEntry.health ~= currentHealth then
                  addData = true
@@ -136,27 +134,24 @@ function TTD:Update()
         -- print("TTD: Added data point. Count:", table.getn(self.History)) -- Debug mit table.getn()
     end
 
-    -- 5. Alte Datenpunkte entfernen
+    -- 5. Remove old data points outside of the time window
     local oldestTimeAllowed = now - self.WINDOW_DURATION
-    -- Verwende table.getn() statt #
     while table.getn(self.History) > 0 and self.History[1].time < oldestTimeAllowed do
         table.remove(self.History, 1)
     end
 
-    -- 6. Genug Daten für eine Berechnung vorhanden?
-    -- Verwende table.getn() statt #
+    -- 6. Check if there are enough data points for a calculation
     if table.getn(self.History) < self.MIN_DATAPOINTS then
-        text:SetText("TTD: Calc...")
+        frame:Hide()
         return
     end
 
-    -- 7. Durchschnitts-DPS berechnen
+    -- 7. Compute average DPS over the window
     local oldestEntry = self.History[1]
-    -- Verwende table.getn() statt #
     local newestEntry = self.History[table.getn(self.History)]
 
     if newestEntry.time == oldestEntry.time then
-        text:SetText("TTD: Calc...")
+        frame:Hide()
         return
     end
 
@@ -169,20 +164,21 @@ function TTD:Update()
         local averageDPS = totalDamage / totalDeltaTime
         local timeToDie = currentHealth / averageDPS
 
-        if timeToDie < 0 or timeToDie > 3600 then -- Plausibilitätscheck (z.B. nicht länger als 1 Stunde)
-            text:SetText("TTD: --")
+        if timeToDie < 0 or timeToDie > 3600 then -- Plausibility check (ignore extreme values)
+            frame:Hide()
         else
             -- Berechne Minuten und Sekunden
             local minutes = math.floor(timeToDie / 60)
             local seconds = math.floor(math.mod(timeToDie, 60))
             -- Formatiere als mm:ss mit führenden Nullen
+            frame:Show()
             text:SetText(string.format("%02d:%02d", minutes, seconds))
             -- *************************
         end
     elseif totalDamage <= 0 and totalDeltaTime > 0.5 then
-        text:SetText("TTD: ---")
+        frame:Hide()
     else
-        text:SetText("Calc...")
+        frame:Hide()
     end
 end
 
@@ -198,5 +194,5 @@ function TTD:IsVisible()
     return frame and frame:IsVisible()
 end
 
--- wichtig für externen Zugriff
+-- Expose TTD for external access
 WarriorTweaksTTD = TTD
