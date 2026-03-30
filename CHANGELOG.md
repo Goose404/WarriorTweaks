@@ -11,3 +11,7 @@ Change update from eventbased to a timer
 Added missing code from initial commit
 Added slashcommands to hide/show the individual frames
 
+## v2.0.0 (30.03.2026)
+Major update of the sunder tracker
+add demo tracker
+add gui for settings
